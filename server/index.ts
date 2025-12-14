@@ -1699,9 +1699,11 @@ if (fs.existsSync(buildPath)) {
   app.use(express.static(buildPath));
   
   // Handle React Router - serve index.html for all non-API routes
-  app.get('*', (req, res) => {
-    if (!req.path.startsWith('/api')) {
+  app.use((req, res, next) => {
+    if (!req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
       res.sendFile(path.join(buildPath, 'index.html'));
+    } else {
+      next();
     }
   });
 }
