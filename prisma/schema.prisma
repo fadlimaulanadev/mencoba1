@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String         @id @default(cuid())
+  badge         String         @unique
+  name          String
+  email         String         @unique
+  phone         String?
+  address       String?
+  password      String
+  plainPassword String?
+  role          UserRole
+  status        UserStatus     @default(ACTIVE)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  university    String?
+  major         String?
+  semester      String?
+  startDate     DateTime?
+  endDate       DateTime?
+  supervisorId  String?
+  department    String?
+  position      String?
+  joinDate      DateTime?
+  activityLogs  ActivityLog[]
+  attendances   Attendance[]
+  leaveRequests LeaveRequest[]
+  reports       Report[]
+  supervisor    User?          @relation("SupervisorStudents", fields: [supervisorId], references: [id])
+  students      User[]         @relation("SupervisorStudents")
+
+  @@index([supervisorId], map: "users_supervisorId_fkey")
+  @@map("users")
+}
+
+model Attendance {
+  id        String           @id @default(cuid())
+  userId    String
+  date      DateTime         @db.Date
+  checkIn   DateTime?
+  checkOut  DateTime?
+  status    AttendanceStatus
+  location  String?
+  notes     String?
+  duration  Int?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  distance  Float?
+  latitude  Float?
+  longitude Float?
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@map("attendances")
+}
+
+model LeaveRequest {
+  id         String        @id @default(cuid())
+  userId     String
+  startDate  DateTime      @db.Date
+  endDate    DateTime      @db.Date
+  reason     String
+  type       LeaveType
+  status     RequestStatus @default(PENDING)
+  approvedBy String?
+  approvedAt DateTime?
+  attachment String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "leave_requests_userId_fkey")
+  @@map("leave_requests")
+}
+
+model Report {
+  id          String       @id @default(cuid())
+  userId      String
+  title       String
+  content     String       @db.Text
+  status      ReportStatus @default(DRAFT)
+  submittedAt DateTime?
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  feedback    String?      @db.Text
+  attachment  String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "reports_userId_fkey")
+  @@map("reports")
+}
+
+model ActivityLog {
+  id          String   @id @default(cuid())
+  userId      String
+  action      String
+  description String
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "activity_logs_userId_fkey")
+  @@map("activity_logs")
+}
+
+enum UserRole {
+  ADMIN
+  PEMBIMBING
+  MAHASISWA
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum AttendanceStatus {
+  PRESENT
+  LATE
+  ABSENT
+  LEAVE
+  SICK
+}
+
+enum LeaveType {
+  SICK
+  PERSONAL
+  FAMILY
+  OFFICIAL
+  OTHER
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ReportStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED
+  APPROVED
+  REVISION_NEEDED
+}
