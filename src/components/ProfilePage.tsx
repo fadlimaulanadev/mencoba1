@@ -8,7 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Phone, MapPin, Lock, Edit, Loader2, Mail } from 'lucide-react';
 import { Separator } from './ui/separator';
 import { toast } from 'sonner';
-import { updateUser, changePassword } from '../lib/api-client';
+import { updateUser, changePassword, getAllUsers } from '../lib/api-client';
 
 interface ProfilePageProps {
   role: 'admin' | 'pembimbing' | 'mahasiswa';
@@ -64,14 +64,8 @@ export function ProfilePage({ role }: ProfilePageProps) {
           return;
         }
 
-        // Fetch fresh user data from API
-        const response = await fetch(`http://${window.location.hostname}:3002/api/users`);
-        
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
-        }
-        
-        const allUsers = await response.json();
+        // Fetch fresh user data from API using api-client
+        const allUsers = await getAllUsers();
         
         let userData = allUsers.find((user: any) => user.id === currentUser.id);
         
@@ -248,23 +242,11 @@ export function ProfilePage({ role }: ProfilePageProps) {
     setChangingPassword(true);
     
     try {
-      // Call API to change password
-      const response = await fetch(`http://${window.location.hostname}:3002/api/users/${currentUser.id}/password`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          currentPassword: passwordData.currentPassword,
-          newPassword: passwordData.newPassword
-        }),
+      // Call API to change password using api-client
+      await changePassword(currentUser.id, {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Gagal mengubah password');
-      }
 
       // Reset form
       setPasswordData({
@@ -568,84 +550,7 @@ export function ProfilePage({ role }: ProfilePageProps) {
                       Batal
                     </Button>
                     <Button 
-                      onClick={() => {
-                        console.log('🔥 BUTTON CLICKED - SAVING');
-                        
-                        // Test API connectivity first
-                        fetch(`http://${window.location.hostname}:3002/api/health`)
-                          .then(response => {
-                            console.log('🏥 Health check response:', response.status);
-                            if (response.ok) {
-                              console.log('✅ Server is reachable');
-                            } else {
-                              console.log('❌ Server health check failed');
-                            }
-                          })
-                          .catch(error => {
-                            console.error('❌ Cannot reach server:', error);
-                          });
-                        
-                        // Update UI immediately
-                        setProfile(prev => ({
-                          ...prev,
-                          name: formData.name,
-                          phone: formData.phone,
-                          address: formData.address,
-                          university: formData.university,
-                          major: formData.major,
-                          semester: formData.semester
-                        }));
-                        
-                        setEditMode(false);
-                        setShowEditButtons(false);
-                        
-                        // Save to database in background (non-blocking)
-                        const currentUser = getCurrentUser();
-                        console.log('👤 Current user from session:', currentUser);
-                        
-                        if (currentUser) {
-                          console.log('🚀 Starting background API call...');
-                          console.log('User ID:', currentUser.id);
-                          
-                          const dataToSend = {
-                            name: formData.name.trim(),
-                            phone: formData.phone.trim() || null,
-                            address: formData.address.trim() || null,
-                            university: formData.university.trim() || null,
-                            major: formData.major.trim() || null,
-                            semester: formData.semester.trim() || null,
-                          };
-                          console.log('Data to send:', dataToSend);
-                          console.log('API URL:', `http://${window.location.hostname}:3002/api/users/${currentUser.id}`);
-                          
-                          fetch(`http://${window.location.hostname}:3002/api/users/${currentUser.id}`, {
-                            method: 'PUT',
-                            headers: {
-                              'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify(dataToSend),
-                          })
-                          .then(response => {
-                            console.log('📊 API Response status:', response.status);
-                            if (response.ok) {
-                              return response.json();
-                            } else {
-                              throw new Error(`HTTP ${response.status}`);
-                            }
-                          })
-                          .then(result => {
-                            console.log('✅ Database updated successfully:', result);
-                            toast.success('✅ Profil disimpan ke database!');
-                          })
-                          .catch(error => {
-                            console.error('❌ Database error:', error);
-                            toast.error('Gagal menyimpan ke database: ' + error.message);
-                          });
-                        } else {
-                          console.error('❌ No current user found');
-                          toast.error('User session tidak ditemukan');
-                        }
-                      }}
+                      onClick={handleSaveProfile}
                       disabled={saving}
                     >
                       {saving && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
