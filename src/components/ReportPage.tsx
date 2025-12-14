@@ -7,9 +7,9 @@ import { Textarea } from './ui/textarea';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 import { Badge } from './ui/badge';
 import { FileText, Upload, Download, CheckCircle, XCircle, Clock, Loader2, Eye, RotateCcw } from 'lucide-react';
-import { createReport, getReports, getAllReports, updateReportStatus } from '../lib/api-client';
+import { createReport, getReports, getAllReports, updateReportStatus, getBaseUrl } from '../lib/api-client';
 
-const API_BASE_URL = `http://${window.location.hostname}:3002`;
+const API_BASE_URL = getBaseUrl();
 
 interface Report {
   id: string;

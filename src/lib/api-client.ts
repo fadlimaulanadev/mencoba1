@@ -7,6 +7,11 @@ const API_BASE_URL = isProduction
   ? `${window.location.origin}/api`
   : `http://${window.location.hostname}:3002/api`;
 
+// Export base URL without /api suffix for file uploads
+export const getBaseUrl = () => isProduction 
+  ? window.location.origin
+  : `http://${window.location.hostname}:3002`;
+
 // Helper function untuk API calls
 async function apiCall(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${endpoint}`;

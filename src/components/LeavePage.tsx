@@ -8,9 +8,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Badge } from './ui/badge';
 import { Calendar, CheckCircle, XCircle, Clock, Loader2, Eye, X, Download, FileText } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
-import { createLeaveRequest, getLeaveRequests, getAllLeaveRequests, updateLeaveRequestStatus } from '../lib/api-client';
+import { createLeaveRequest, getLeaveRequests, getAllLeaveRequests, updateLeaveRequestStatus, getBaseUrl } from '../lib/api-client';
 
-const API_BASE_URL = `http://${window.location.hostname}:3002`;
+const API_BASE_URL = getBaseUrl();
 
 // Modal untuk melihat detail pengajuan izin
 function DetailModal({
