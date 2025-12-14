@@ -1,8 +1,11 @@
 // API Client untuk komunikasi dengan backend server
 // Menghubungkan frontend React dengan database MySQL melalui API
 
-// Backend selalu HTTP (tidak perlu HTTPS untuk API internal)
-const API_BASE_URL = `http://${window.location.hostname}:3002/api`;
+// Detect environment - production uses same origin, development uses port 3002
+const isProduction = window.location.hostname !== 'localhost' && !window.location.hostname.includes('192.168') && !window.location.hostname.includes('10.');
+const API_BASE_URL = isProduction 
+  ? `${window.location.origin}/api`
+  : `http://${window.location.hostname}:3002/api`;
 
 // Helper function untuk API calls
 async function apiCall(endpoint: string, options: RequestInit = {}) {

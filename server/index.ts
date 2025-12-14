@@ -1693,7 +1693,18 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'API Server is running' });
 });
 
-
+// Serve static files from build folder (production)
+const buildPath = path.join(__dirname, '../build');
+if (fs.existsSync(buildPath)) {
+  app.use(express.static(buildPath));
+  
+  // Handle React Router - serve index.html for all non-API routes
+  app.get('*', (req, res) => {
+    if (!req.path.startsWith('/api')) {
+      res.sendFile(path.join(buildPath, 'index.html'));
+    }
+  });
+}
 
 // Start HTTP server - listen on all interfaces for network access
 const port = typeof PORT === 'string' ? parseInt(PORT, 10) : PORT;
