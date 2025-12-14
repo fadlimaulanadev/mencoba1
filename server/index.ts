@@ -1693,6 +1693,86 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', message: 'API Server is running' });
 });
 
+// Seed database endpoint (untuk production)
+app.post('/api/seed', async (req, res) => {
+  try {
+    const { secretKey } = req.body;
+    
+    // Simple protection
+    if (secretKey !== 'seed-pim-2025') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Check if already seeded
+    const existingAdmin = await prisma.user.findFirst({ where: { role: 'ADMIN' } });
+    if (existingAdmin) {
+      return res.status(400).json({ error: 'Database already seeded', admin: existingAdmin.email });
+    }
+
+    const defaultPassword = 'password123';
+    const hashedPassword = await bcrypt.hash(defaultPassword, 10);
+
+    // Create Admin
+    const admin = await prisma.user.create({
+      data: {
+        id: 'am001',
+        badge: 'ADM001',
+        name: 'Admin System',
+        email: 'admin@pim.co.id',
+        phone: '0811-1234-5678',
+        password: hashedPassword,
+        plainPassword: defaultPassword,
+        role: 'ADMIN',
+        department: 'IT',
+      },
+    });
+
+    // Create Pembimbing
+    const pembimbing1 = await prisma.user.create({
+      data: {
+        id: 'pg001',
+        badge: 'PB001',
+        name: 'Drs. Budiman',
+        email: 'budiman@pim.co.id',
+        phone: '0811-2345-6789',
+        password: hashedPassword,
+        plainPassword: defaultPassword,
+        role: 'PEMBIMBING',
+        department: 'Produksi',
+      },
+    });
+
+    // Create Mahasiswa
+    const mahasiswa1 = await prisma.user.create({
+      data: {
+        id: 'ms0001',
+        badge: '2021001',
+        name: 'Ahmad Fauzi',
+        email: 'ahmad.fauzi@email.com',
+        phone: '0812-3456-7890',
+        password: hashedPassword,
+        plainPassword: defaultPassword,
+        role: 'MAHASISWA',
+        university: 'Universitas Syiah Kuala',
+        supervisorId: pembimbing1.id,
+      },
+    });
+
+    res.json({ 
+      message: 'Database seeded successfully!',
+      users: {
+        admin: admin.email,
+        pembimbing: pembimbing1.email,
+        mahasiswa: mahasiswa1.email,
+      },
+      password: defaultPassword
+    });
+  } catch (error: any) {
+    console.error('Seed error:', error);
+    res.status(500).json({ error: 'Seed failed', details: error.message });
+  }
+});
+
 // Serve static files from build folder (production)
 const buildPath = path.join(__dirname, '../build');
 if (fs.existsSync(buildPath)) {
